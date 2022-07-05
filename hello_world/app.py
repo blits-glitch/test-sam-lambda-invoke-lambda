@@ -6,46 +6,26 @@ import os
 
 
 def lambda_handler(event, context):
-    """Sample pure Lambda function
-
-    Parameters
-    ----------
-    event: dict, required
-        API Gateway Lambda Proxy Input Format
-
-        Event doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
-
-    context: object, required
-        Lambda Context runtime methods and attributes
-
-        Context doc: https://docs.aws.amazon.com/lambda/latest/dg/python-context-object.html
-
-    Returns
-    ------
-    API Gateway Lambda Proxy Output Format: dict
-
-        Return doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
-    """
-
-    # try:
-    #     ip = requests.get("http://checkipß.amazonaws.com/")
-    # except requests.RequestException as e:
-    #     # Send some context about this error to Lambda Logs
-    #     print(e)
-
-    #     raise e
-
     env_lambda_name = os.environ['LambdaName']
 
     print('call caller function')
 
     # 呼び出し処理
     client = boto3.client('lambda', region_name='ap-northeast-1')
-    client.invoke(
+    response = client.invoke(
         FunctionName=env_lambda_name,
         InvocationType='RequestResponse',
         LogType='Tail',
     )
+
+    # bytes型にする
+    # 注意：readを一回してしまうとストリームの末尾にシークされてしまうため、2回目以降の呼び出しでは結果を取得できない
+    body = response['Payload'].read()
+
+    # utf-8に変換する
+    payload = body.decode('utf-8')
+
+    print(payload)
 
     return {
         "statusCode": 200,
